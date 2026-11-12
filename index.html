@@ -320,6 +320,16 @@
     .body-photo-first { margin-top:0; }.phase-report { margin:10px 0; padding:10px; border:2px solid var(--blue); border-radius:10px; background:#edf2fa; font-size:12px; }
     @media (max-height:640px) { .seven-board .week-row { min-height:46px; } .focus-strip { padding:5px 7px; }.compact-head h2 { font-size:14px; } }
 
+
+    .welcome { min-height:0; overflow-y:auto; padding:10px 2px; }.welcome h2 { margin:15px 0 8px; font-size:23px; }.welcome p { font-size:12px; line-height:1.65; }.welcome .event-option span { margin-top:7px; }.welcome>.mini { margin-top:12px; }
+    .condition-strip { flex-shrink:0; display:flex; width:100%; gap:6px; align-items:center; border:1px dashed var(--blue); border-radius:7px; background:#f0f4e0; color:var(--ink); padding:6px 7px; margin-bottom:6px; text-align:left; cursor:pointer; }.condition-strip b { flex-shrink:0; font-size:10px; }.condition-strip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; }
+    .weekly-report { padding:8px 2px 16px; }.weekly-report h3 { margin:17px 0 8px; font-size:16px; }.weekly-report p { font-size:12px; line-height:1.65; margin:8px 0; }
+    .progress-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }.growth-cell { padding:9px; border:1.5px solid var(--ink); border-radius:10px; background:#eaf1fa; }.growth-cell b,.growth-cell span,.growth-cell small { display:block; line-height:1.55; }.growth-cell b { font-size:12px; }.growth-cell span,.growth-cell small { font-size:11px; }
+    .assessment-progress { margin:9px 0; padding:10px; border:2px solid var(--blue); border-radius:11px; background:#edf2fa; font-size:12px; }.assessment-progress>b { line-height:1.6; }.assessment-progress small { display:block; margin-top:8px; line-height:1.6; font-size:10px; }.assessment-rows p { margin:5px 0; font-size:11px; line-height:1.45; }
+    .breakthrough { padding:9px; border:2px solid var(--ink); border-radius:8px; background:var(--lime); font-weight:800; }
+    .action-advice { padding:10px; margin:9px 0; border:1.5px solid var(--ink); border-radius:10px; background:var(--paper-2); }.action-advice p { font-size:12px; line-height:1.6; margin:0 0 7px; }
+    [data-mode="planner"] .body-brief .brief-text small { display:none; } .focus-strip { min-height:33px; }
+
   </style>
 </head>
 <body>
@@ -327,7 +337,7 @@
     <div class="layer" id="gameLayer" data-mode="planner">
       <header class="masthead">
         <div class="brand"><div class="brand-mark">🏋</div><div><h1>铁馆百日记</h1><small>48 WEEKS IN THE IRON GYM</small></div></div>
-        <span class="build-tag">V2.1 · 48 周养成</span>
+        <span class="build-tag">V3 · 四周验证</span>
       </header>
       <section class="progress-bar" aria-label="四十八周赛程"><div><div class="eyebrow" id="cycleLabel">第 01 / 48 周 · 周排程</div><div class="progress-main"><strong id="dayLabel">第 1 日</strong><span id="phaseLabel">5 门课程 · 2 次活动</span></div></div><div class="dots" id="dots"></div></section>
       <div class="page-host" id="pageHost">
@@ -340,7 +350,7 @@
           <header class="tab-heading"><h2>身体档案</h2><p id="bodySummary">疲劳 18 · 状态良好</p></header>
           <section class="body-details" id="bodyDetails"><div class="body-details-content">
       <section class="stats" aria-label="身体状态"><div class="stat"><small>行动体力</small><b id="energy">52</b><span class="state-hint" id="energyHint">只用于活动</span></div><div class="stat"><small>疲劳</small><b id="fatigue">18</b><span class="state-hint" id="fatigueHint">状态良好</span></div><div class="stat"><small>心情</small><b id="mood">60</b><span class="state-hint" id="moodHint">稳定</span></div><div class="stat"><small>体脂</small><b id="fat">25%</b><span class="state-hint" id="fatHint">增肌期·观察变化</span></div></section>
-      <p class="threshold-note">疲劳 ≥50：课程成长 82%；≥75：64%。心情 ≤30：成长效率 82%；≥75：108%。</p>
+      <p class="threshold-note">疲劳 0–35：正常；36–60：成长 82%；61+：成长 60%。心情 ≤30：成长 82%；≥75：108%。高疲劳需要更多耐力储备。</p>
       <section class="mirror" aria-label="最近一次阶段展示"><div class="snapshot-tag" id="snapshotTag">入馆照</div><div class="snapshot-copy"><b id="snapshotTitle">新手的倔强</b><span id="snapshotSub">下一次体型更新：第 8 周</span></div><div class="snapshot-note" id="snapshotNote">实时耐力逐日变化；永久外形每 8 周更新。</div><div class="avatar-wrap" aria-hidden="true"><div class="avatar" id="avatar"><div class="hair"></div><div class="head"></div><div class="neck"></div><div class="lats"></div><div class="trap left"></div><div class="trap right"></div><div class="shoulder left"></div><div class="shoulder right"></div><div class="arm left"></div><div class="arm right"></div><div class="torso"><div class="pec"></div><div class="abs"></div></div><div class="shorts"></div><div class="leg left"></div><div class="leg right"></div></div></div><div class="floor"></div></section>
       <nav class="photo-tabs" id="photoTabs" aria-label="回看阶段照"></nav>
       <section class="muscle-board" aria-label="实时肌群数据"><header><b>实时肌群数据</b><span id="muscleMeta">维度周结算 · 耐力逐日变化</span></header><div class="muscle-list" id="muscles"></div></section>
@@ -372,7 +382,8 @@
   <section class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><button class="sheet-backdrop" id="sheetBackdrop" aria-label="关闭选择窗口"></button><div class="sheet-card"><header class="sheet-head"><h2 id="sheetTitle"></h2><button class="mini" id="sheetClose" type="button" aria-label="关闭选择窗口">关闭</button></header><div class="sheet-nav" id="sheetNav"></div><div class="sheet-content" id="sheetContent"></div><footer class="sheet-actions" id="sheetActions"></footer></div></section>
   <div class="toast" id="toast" aria-live="polite"></div>
 
-  <script src="engine.js"></script>
-  <script src="game-v2.js"></script>
+  <script src="legacy/engine-v21.js?v=3"></script>
+  <script src="engine.js?v=3"></script>
+  <script src="game-v2.js?v=3"></script>
 </body>
 </html>
