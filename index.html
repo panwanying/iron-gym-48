@@ -321,6 +321,18 @@
     @media (max-height:640px) { .seven-board .week-row { min-height:46px; } .focus-strip { padding:5px 7px; }.compact-head h2 { font-size:14px; } }
 
 
+    /* V3.1: direct play, local effect choices, one combined weekly report. */
+    .event-option.selected { border-color:var(--blue); background:var(--blue-2); box-shadow:inset 0 0 0 1px var(--blue); }
+    .recovery-preview { margin:12px 0; padding:11px; border:2px solid var(--blue); border-radius:11px; background:#edf2fa; font-size:12px; }
+    .recovery-preview p { line-height:1.6; margin:7px 0; }.recovery-preview small { font-size:10px; line-height:1.5; display:block; }
+    .recovery-preview>span,.recovery-preview>em { display:block; margin-top:7px; font-size:11px; font-style:normal; line-height:1.6; }
+    .buff-note,.pending-text { color:var(--blue); font-weight:800; }.buff-note { padding:6px; background:#d9ec6355; border-radius:5px; line-height:1.6; }
+    .validation-result { margin:9px 0; padding:12px; border:2px solid var(--blue); border-radius:12px; background:#edf2fa; }.validation-result h3 { margin:12px 0 7px; }.validation-result p { font-size:12px; line-height:1.6; }
+    .report-details { margin:15px 0; }.report-details summary,.validation-result summary { padding:9px 0; cursor:pointer; font-size:12px; font-weight:800; }
+    .schedule-dates { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }.schedule-dates .event-option { min-height:46px; font-size:12px; margin:0; }
+    .mini { min-height:44px; }.plan-tools .mini { font-size:11px; min-height:42px; }
+    #growthTabs { position:sticky; top:-10px; z-index:3; background:var(--paper); padding:7px 0; display:flex; gap:5px; }#growthTabs .mini { flex:1; }
+    .week-risk { min-width:0; }.body-brief .brief-text b { font-size:11px; line-height:1.55; }
     .welcome { min-height:0; overflow-y:auto; padding:10px 2px; }.welcome h2 { margin:15px 0 8px; font-size:23px; }.welcome p { font-size:12px; line-height:1.65; }.welcome .event-option span { margin-top:7px; }.welcome>.mini { margin-top:12px; }
     .condition-strip { flex-shrink:0; display:flex; width:100%; gap:6px; align-items:center; border:1px dashed var(--blue); border-radius:7px; background:#f0f4e0; color:var(--ink); padding:6px 7px; margin-bottom:6px; text-align:left; cursor:pointer; }.condition-strip b { flex-shrink:0; font-size:10px; }.condition-strip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; }
     .weekly-report { padding:8px 2px 16px; }.weekly-report h3 { margin:17px 0 8px; font-size:16px; }.weekly-report p { font-size:12px; line-height:1.65; margin:8px 0; }
@@ -337,7 +349,7 @@
     <div class="layer" id="gameLayer" data-mode="planner">
       <header class="masthead">
         <div class="brand"><div class="brand-mark">🏋</div><div><h1>铁馆百日记</h1><small>48 WEEKS IN THE IRON GYM</small></div></div>
-        <span class="build-tag">V3 · 四周验证</span>
+        <span class="build-tag">V3.1 · 自选课表</span>
       </header>
       <section class="progress-bar" aria-label="四十八周赛程"><div><div class="eyebrow" id="cycleLabel">第 01 / 48 周 · 周排程</div><div class="progress-main"><strong id="dayLabel">第 1 日</strong><span id="phaseLabel">5 门课程 · 2 次活动</span></div></div><div class="dots" id="dots"></div></section>
       <div class="page-host" id="pageHost">
@@ -382,8 +394,8 @@
   <section class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><button class="sheet-backdrop" id="sheetBackdrop" aria-label="关闭选择窗口"></button><div class="sheet-card"><header class="sheet-head"><h2 id="sheetTitle"></h2><button class="mini" id="sheetClose" type="button" aria-label="关闭选择窗口">关闭</button></header><div class="sheet-nav" id="sheetNav"></div><div class="sheet-content" id="sheetContent"></div><footer class="sheet-actions" id="sheetActions"></footer></div></section>
   <div class="toast" id="toast" aria-live="polite"></div>
 
-  <script src="legacy/engine-v21.js?v=3"></script>
-  <script src="engine.js?v=3"></script>
-  <script src="game-v2.js?v=3"></script>
+  <script src="legacy/engine-v21.js?v=3.1"></script>
+  <script src="engine.js?v=3.1"></script>
+  <script src="game-v2.js?v=3.1"></script>
 </body>
 </html>

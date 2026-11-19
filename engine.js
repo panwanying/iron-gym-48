@@ -29,7 +29,7 @@
   ];
   const activities=[
     {id:'rest',name:'完整休息',energy:0,fatigue:-32,mood:8,recovery:24,targets:0,text:'全身耐力 +24，疲劳 −32，心情 +8；同周第二次仅 60%，不恢复行动体力。'},
-    {id:'active',name:'主动恢复',energy:8,fatigue:-10,mood:3,recovery:54,targets:2,buff:true,text:'选择 1–2 个部位：耐力 +54；疲劳 −10，心情 +3。消耗 8 行动体力；所选部位下次训练成长加成。'},
+    {id:'active',name:'主动恢复',energy:8,fatigue:-10,mood:3,recovery:54,targets:2,buff:true,text:'选择 1–2 个部位：耐力 +54；疲劳 −10，心情 +3。消耗 8 行动体力；所选部位下次受到训练刺激时成长 +10%（含辅助肌群）。'},
     {id:'rehab',name:'康复训练',energy:12,fatigue:-10,mood:3,recovery:24,targets:2,repair:1,text:'选择 1–2 个受伤部位：伤病 −1、耐力 +24；疲劳 −10。消耗 12 行动体力。'}
     ,{id:'social',name:'运动搭子社交',energy:10,fatigue:-5,mood:18,recovery:3,targets:0,unlock:s=>passed(s,'team'),text:'心情 +18，疲劳 −5，全身耐力 +3，消耗 10 行动体力；通过校队观察后开放。'},
     {id:'outdoor',name:'户外放松',energy:8,fatigue:-8,mood:14,recovery:5,targets:0,unlock:s=>passed(s,'cardio'),text:'心情 +14，疲劳 −8，全身耐力 +5，消耗 8 行动体力；通过体能测试后开放。'},
@@ -120,9 +120,9 @@
       for(const k of item.id==='rest'||!item.targets?keys:targets){
         after.muscles[k].endurance=Math.min(cap(after.muscles[k]),after.muscles[k].endurance+item.recovery*factor);
         if(item.repair)after.muscles[k].injury=Math.max(0,after.muscles[k].injury-item.repair);
-        if(item.buff)after.recoveryBuffs[k]=item.buff===true?1.1:item.buff;
+        if(item.buff)after.recoveryBuffs[k]=Math.max(typeof after.recoveryBuffs[k]==='number'?after.recoveryBuffs[k]:after.recoveryBuffs[k]?1.1:1,item.buff===true?1.1:item.buff);
       }
-      changes.push(item.name+(factor<1?'（本周重复 ×0.6）':'')+'：耐力 +'+round(item.recovery*factor)+'，疲劳 '+round(item.fatigue*factor)+'，心情 +'+round(item.mood*factor)+(item.buff?'；所选部位下次训练成长 +10%':'')+(item.repair?'；伤病 −1':''));
+      changes.push(item.name+(factor<1?'（本周重复 ×0.6）':'')+'：耐力 +'+round(item.recovery*factor)+'，疲劳 '+round(item.fatigue*factor)+'，心情 +'+round(item.mood*factor)+(item.buff?'；'+targets.map(k=>names[k]+'下次成长 +'+round((after.recoveryBuffs[k]-1)*100)+'%').join('、'):'')+(item.repair?'；伤病 −1':''));
     }else return fail('未知排程类型');
     const courseAfter=copy(after);
     after.energy=clamp(after.energy+food.energy,0,100);after.fatigue=round(clamp(after.fatigue+food.fatigue,0,100));after.mood=round(clamp(after.mood+food.mood,0,100));
@@ -219,28 +219,13 @@
   function bookRetry(s){const o=s.retryOffer;if(s.mode!=='planner'||!o||s.week<o.availableWeek||s.retryEnrollment)return false;s.retryEnrollment={id:o.id,tier:o.tier,dueWeek:s.week,originWeek:o.originWeek};s.retryOffer=null;return true;}
   function acknowledgeAssessment(s){if(!s.pendingAssessments?.length)return false;s.pendingAssessments.shift();return true;}
   function weekOptions(s){const weak=profile(s).weak||keys[0];return [{id:'weak',name:'教练陪练弱项',cost:10,text:names[weak]+'下次成长 +10%，消耗 10 行动力',target:weak},{id:'buddy',name:'和搭子聊一会儿',cost:8,text:'心情 +10，消耗 8 行动力'},{id:'decline',name:'按原计划准备',cost:0,text:'无消耗，不改变状态'}];}
-  function chooseWeekOption(s,id){if(s.mode!=='planner'||s.weekChoice!==null)return false;const o=weekOptions(s).find(o=>o.id===id);if(!o||s.energy<o.cost)return false;s.energy-=o.cost;if(o.target)s.recoveryBuffs[o.target]=true;if(id==='buddy')s.mood=clamp(s.mood+10,0,100);s.weekChoice=id;return true;}
+  function chooseWeekOption(s,id){if(s.mode!=='planner'||s.weekChoice!==null)return false;const o=weekOptions(s).find(o=>o.id===id);if(!o||s.energy<o.cost)return false;s.energy-=o.cost;if(o.target)s.recoveryBuffs[o.target]=Math.max(typeof s.recoveryBuffs[o.target]==='number'?s.recoveryBuffs[o.target]:s.recoveryBuffs[o.target]?1.1:1,1.1);if(id==='buddy')s.mood=clamp(s.mood+10,0,100);s.weekChoice=id;return true;}
   function unlockProgress(s){
     const entries=[['press','卧推',count(s,'bench'),3],['pulldown','杠铃划船',count(s,'row'),3],['curl','推拉课合计',['bench','row','press','pulldown'].reduce((n,id)=>n+count(s,id),0),5],['lateral','哑铃推举',count(s,'press'),3],['deadlift','深蹲',count(s,'squat'),3],['stairs','跑步',count(s,'run'),3],['swim','有氧合计',typeCount(s,'有氧'),5],['hike','爬楼',count(s,'stairs'),3],['basketball','深蹲',count(s,'squat'),3],['tennis','乒乓球',count(s,'pingpong'),3]];
     return entries.map(([id,label,value,target])=>({id,name:courses.find(c=>c.id===id).name,label,value,target,remaining:Math.max(0,target-value),extra:id==='deadlift'?'另需腿维度 ≥1':id==='hike'?'另需腿耐力上限 ≥76':id==='tennis'?'另需肩维度 ≥1':''})).filter(x=>!courses.find(c=>c.id===x.id).unlock(s)).sort((a,b)=>a.remaining-b.remaining);
   }
   function breakthroughHints(s){return keys.map(k=>{const m=s.muscles[k],remaining=round(requirement(m.dimension)-m.xp);const best=unlocked(s).map(c=>({c,r:simulate(s,{kind:'course',id:c.id},s.plan.meal)})).filter(x=>x.r.ok&&x.r.gains[k]>0).sort((a,b)=>b.r.gains[k]-a.r.gains[k])[0];return {key:k,name:names[k],xp:m.xp,target:requirement(m.dimension),dimension:m.dimension,remaining,course:best?.c.name||null,estimated:best?Math.ceil(remaining/best.r.gains[k]):null};}).sort((a,b)=>a.remaining-b.remaining);}
   function coursePurpose(s,c){const a=assessmentProgress(s),related=!!a&&(a?.id==='specialty'?c.main.includes((s.trainingRoute==='weak'?profile(s).weak:profile(s).strong)||'chest'):a?.id==='strength'?c.type==='撸铁':a?.id==='cardio'?c.type==='有氧':c.type==='体育运动'),next=unlockProgress(s).find(x=>x.label===c.name);return (related?'服务第 '+a.dueWeek+' 周'+a.name:'补充'+c.type+'记录')+(next?'；'+c.name+' '+next.value+'/'+next.target+'，推进'+next.name:'');}
-  function suggestions(s,p=s.plan){
-    const f=forecast(s,p),list=[];if(p.slots.some(x=>!x))return [{text:'先补齐 '+Math.max(0,5-f.courseN)+' 门课程和 '+Math.max(0,2-f.activityN)+' 次活动，再检查后续日期。'}];
-    const risky=f.rows.find(r=>!r.result.ok||r.result.risk?.overused.length),tired=f.rows.find(r=>r.result.ok&&r.before.fatigue>35);
-    if(risky){
-      const source=risky.before,c=getCourse(source,p.slots[risky.index]),targets=(!risky.result.ok?Object.keys(c?.cost||{}).filter(k=>source.muscles[k].injury>0):risky.result.risk.overused).slice(0,2),kind=targets.some(k=>source.muscles[k].injury>=2)?'rehab':'active';
-      for(let j=0;j<7&&targets.length;j++)if(p.slots[j]?.kind==='activity'){const trial=copy(p);trial.slots[j]={kind:'activity',id:kind,targets};if(j>risky.index){const moved=trial.slots.splice(j,1)[0];trial.slots.splice(risky.index,0,moved);}const test=forecast(s,trial),sum=x=>x.rows.reduce((n,r)=>n+(r.result.risk?.overused.length||0),0);if(test.ok&&(!f.ok||sum(test)<sum(f))){list.push({text:'把一次'+(kind==='rehab'?'康复':'主动恢复')+'移到第 '+(risky.index+1)+' 日训练前，针对'+targets.map(k=>names[k]).join('、')+'；已重新预测，可减少当前伤病风险。',plan:trial});break;}}
-      if(!list.length)list.push({text:'第 '+(risky.index+1)+' 日'+(risky.result.reason||risky.result.warnings.join('；'))+'，优先恢复该部位，或改练未受影响肌群。',date:risky.index});
-    }
-    if(tired&&list.length<3)list.push({text:'第 '+(tired.index+1)+' 日前疲劳 '+round(tired.before.fatigue)+'，可将完整休息前移；局部耐力不足时优先主动恢复。',date:tired.index});
-    const goal=assessmentProgress(f.settlement.after,s.assessment),gap=goal?.rows.find(r=>!r.passed);
-    if(goal?.rows.some(r=>r.key==='fatigue'&&!r.passed)&&list.length<3){for(let j=0;j<7;j++)if(p.slots[j]?.kind==='activity'){const trial=copy(p),moved={kind:'activity',id:'rest',targets:[]};trial.slots.splice(j,1);trial.slots.push(moved);const check=forecast(s,trial);if(check.ok&&check.settlement.after.fatigue<f.settlement.after.fatigue){list.push({text:'把一次完整休息放到周末，预计疲劳 '+f.settlement.after.fatigue+' → '+check.settlement.after.fatigue+'；其他验证条件仍按周览检查。',plan:trial});break;}}}if(gap&&list.length<3)list.push({text:'本周后距离'+goal.name+'：'+gap.label+(gap.direction==='max'?'需降到 '+gap.target:'还差 '+gap.remaining)+'，调整相关课程或周末恢复。'});
-    const next=unlockProgress(s)[0];if(next&&list.length<3)list.push({text:next.name+'解锁：'+next.label+' '+next.value+'/'+next.target+'。'+(next.extra||'下周可优先安排相关课程。')});
-    if(!list.length)list.push({text:'本周未发现硬性阻碍，可继续推进已报名验证，保留重点部位的恢复。'});return list.slice(0,3);
-  }
-
   const focusDefs={
     strength:{name:'积累基础块头',text:'本阶段总维度增加 8，保留分化与恢复。'},weak:{name:'补足当前弱项',text:'本阶段起始最弱部位增加 2 维，阶段内目标保持固定。'},
     balance:{name:'收紧体型差距',text:'将肌群极差减少 2；起始已均衡时保持极差不超过 2。'},mastery:{name:'练熟一门课程',text:'本阶段至少一门课程完成 8 次，深化熟练度。'},
@@ -264,67 +249,6 @@
     if(id==='maintain'){const e=endings(s).find(e=>e.id===(s.preferredRoute||'classic'));value=e?.eligible?1:0;label=(e?.name||'本期路线')+'：'+(value?'当前满足':'继续调整');}
     return {id,name:focusDefs[id].name,label,value,target,complete:value>=target,phase:f.phase};
   }
-  function autoPlan(s,route='classic'){
-    prepareWeek(s);
-    // Beam search uses exactly the same deterministic per-date forecast as execution.
-    const available=unlocked(s),injuryCost=x=>keys.reduce((n,k)=>n+x.muscles[k].injury*14,0);
-    let beam=[{state:model(s),slots:[],c:0,a:0,score:0}];
-    for(let day=0;day<7;day++){
-      const candidates=[];
-      for(const node of beam){
-        const options=[];
-        if(node.c<5)for(const c of available)for(const level of levels(s,c)){options.push({kind:'course',id:c.id,level});if(weekCondition(s).id==='crowded'&&c.id==='bench')options.push({kind:'course',id:c.id,level,tech:true});}
-        if(node.a<2){options.push({kind:'activity',id:'rest',targets:[]});
-          const hurt=keys.filter(k=>node.state.muscles[k].injury>0).sort((a,b)=>node.state.muscles[b].injury-node.state.muscles[a].injury);
-          if(hurt.length)options.push({kind:'activity',id:'rehab',targets:hurt.slice(0,2)});
-          const low=keys.slice().sort((a,b)=>node.state.muscles[a].endurance/cap(node.state.muscles[a])-node.state.muscles[b].endurance/cap(node.state.muscles[b]));
-          options.push({kind:'activity',id:'active',targets:low.slice(0,2)});
-          const chosen=profile(s),target=s.trainingRoute==='weak'?chosen.weak:chosen.strong;if(target)for(const id of ['corrective','specialist']){const a=activities.find(a=>a.id===id);if(activityAvailable(s,a)&&(!a.weakOnly||target===chosen.weak))options.push({kind:'activity',id,targets:[target]});}
-          for(const id of ['social','outdoor'])if(activityAvailable(s,activities.find(a=>a.id===id))&&node.state.mood<65)options.push({kind:'activity',id,targets:[]});
-        }
-        for(const slot of options){const cN=node.c+(slot.kind==='course'),aN=node.a+(slot.kind==='activity');if(5-cN+2-aN>6-day)continue;const r=simulate(node.state,slot,s.plan.meal);if(!r.ok)continue;
-          let reward=0;
-          if(slot.kind==='course'){
-            const c=r.item,total=Object.values(r.gains).reduce((a,b)=>a+b,0),seen=node.slots.filter(x=>x.id===c.id).length;
-            reward=total*.45+1.5-seen*3;
-            if(route==='mass'){reward=total*.8+1.5-seen*1.8;reward+=c.type==='撸铁'?5:0;}
-            if(route==='lean')reward+=c.type==='有氧'?11:0;
-            if(route==='lean'&&c.type==='撸铁'){
-              const deficient=c.main.some(k=>s.muscles[k].dimension<2),needsCounts=typeCount(s,'撸铁')<20;
-              if(deficient||needsCounts)reward+=14;
-              if(!node.slots.some(x=>courses.find(y=>y.id===x.id)?.type==='撸铁'))reward+=9;
-            }
-            if(route==='sport'){
-              reward+=c.type==='体育运动'?12:0;
-              if(typeCount(s,c.type)<8&&!node.slots.some(x=>courses.find(y=>y.id===x.id)?.type===c.type))reward+=22;
-              if(c.id==='squat'&&count(s,'squat')<3)reward+=12;
-              if(keys.filter(k=>cap(s.muscles[k])>=config.endings.sport.cap).length<4&&c.type==='撸铁'&&c.main.some(k=>s.muscles[k].dimension<4&&['back','chest','traps'].includes(k)))reward+=10;
-            }
-            if(route==='classic'){
-              const effective=k=>node.state.muscles[k].dimension+(node.state.muscles[k].xp+(node.state.pendingGrowth[k]||0))/requirement(node.state.muscles[k].dimension),min=Math.min(...keys.map(effective));
-              reward=Object.entries(r.gains).reduce((n,[k,v])=>n+v/(1+Math.max(0,effective(k)-min)*1.3),0)*1.2+1-seen*3;
-              if(['bench','row','squat'].includes(c.id)&&count(s,c.id)<12)reward+=8;
-            }
-            const p=profile(s);if(s.trainingRoute==='strong'&&p.strong&&c.growth[p.strong])reward+=Math.min(4,c.growth[p.strong]*.7);if(s.trainingRoute==='weak'&&p.weak&&c.growth[p.weak])reward+=Math.min(5,c.growth[p.weak]);
-            const goal=assessmentProgress(node.state,s.assessment);if(goal){const related=goal.id==='strength'?['bench','row','squat'].includes(c.id):goal.id==='cardio'?c.id==='run':c.type==='体育运动';if(related&&!goal.complete)reward+=1.5;const needed=goal.rows.find(r=>r.key===c.id&&r.direction!=='max'&&count(node.state,c.id)+(node.state.pendingCounts[c.id]||0)<r.target);if(needed)reward+=9;}
-            const focus=s.focusState;
-            if(focus?.choice==='weak'&&c.growth[focus.weak])reward+=Math.min(3,c.growth[focus.weak]*.6);
-            if(focus?.choice==='intensity'&&slot.level)reward+=1;
-            if(focus?.choice==='mastery'&&mastery(count(s,c.id))<3)reward+=1.5;
-            if(focus?.choice==='balance'){
-              const min=Math.min(...keys.map(k=>s.muscles[k].dimension));reward+=c.main.some(k=>s.muscles[k].dimension===min)?1.5:0;
-            }
-          }
-          const restored=slot.kind==='activity'?keys.reduce((n,k)=>n+Math.max(0,r.courseAfter.muscles[k].endurance-node.state.muscles[k].endurance),0):0;
-          let score=node.score+reward-(injuryCost(r.after)-injuryCost(node.state))-.035*Math.max(0,r.after.fatigue-30)+.012*(r.after.mood-node.state.mood)+restored*.025;
-          if(day===6&&s.assessment?.dueWeek===s.week){const progress=assessmentProgress(settle(r.after,s.week).after,s.assessment);score+=progress.complete?6:progress.score/100*2;}
-          candidates.push({state:r.after,slots:node.slots.concat([slot]),c:cN,a:aN,score});
-        }
-      }
-      candidates.sort((a,b)=>b.score-a.score);beam=candidates.slice(0,28);if(!beam.length)return null;
-    }
-    return {slots:beam[0].slots,meal:s.plan.meal};
-  }
-  root.IronV2={config,names,keys,courses,activities,meals,initial,blankPlan,model,copy,round,cap,requirement,mastery,count,typeCount,risk,simulate,settle,forecast,snapshot,endings,unlocked,startWeek,execute,nextWeek,autoPlan,fatigueLabel,moodLabel,getCourse,levels,advanceWeek,phaseInfo,weekCondition,activityAvailable,prepareWeek,chooseRoute,rollProfile,profile,enroll,assessmentProgress,evaluateAssessment,assessmentDefs,bookRetry,acknowledgeAssessment,weekOptions,chooseWeekOption,unlockProgress,breakthroughHints,coursePurpose,suggestions,passed,focusChoices,focusProgress,setFocus,canChooseFocus,ensureFocus};
+  root.IronV2={config,names,keys,courses,activities,meals,initial,blankPlan,model,copy,round,cap,requirement,mastery,count,typeCount,risk,simulate,settle,forecast,snapshot,endings,unlocked,startWeek,execute,nextWeek,fatigueLabel,moodLabel,getCourse,levels,advanceWeek,phaseInfo,weekCondition,activityAvailable,prepareWeek,chooseRoute,rollProfile,profile,enroll,assessmentProgress,evaluateAssessment,assessmentDefs,bookRetry,acknowledgeAssessment,weekOptions,chooseWeekOption,unlockProgress,breakthroughHints,coursePurpose,passed,focusChoices,focusProgress,setFocus,canChooseFocus,ensureFocus};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.IronV2;
 })(globalThis);
